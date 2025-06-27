@@ -1,0 +1,13 @@
+stages:
+  - deploy
+
+deploy_to_ec2:
+  stage: deploy
+  only:
+    - main # or your deployment branch
+  script:
+    - echo "$SSH_PRIVATE_KEY" > key.pem
+    - chmod 600 key.pem
+    - ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USER@$EC2_HOST "mkdir -p $EC2_DEPLOY_PATH"
+    - scp -i key.pem -r build/* $EC2_USER@$EC2_HOST:$EC2_DEPLOY_PATH
+    - ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USER@$EC2_HOST "sudo npm install -g serve && pkill serve || true && nohup serve -s $EC2_DEPLOY_PATH -l 3000 > output.log 2>&1 &"
